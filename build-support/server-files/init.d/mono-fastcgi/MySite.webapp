@@ -1,0 +1,9 @@
+<apps>
+    <web-application>
+        <name>My Site</name>
+        <vhost>*</vhost>
+        <vport>80</vport>
+        <vpath>/</vpath>
+        <path>/var/wwwroot</path>
+    </web-application>
+</apps>

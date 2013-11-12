@@ -1,0 +1,116 @@
+#!/usr/bin/env bash
+
+### BEGIN INIT INFO
+# Provides:          monoserve.sh
+# Required-Start:    $local_fs $syslog $remote_fs
+# Required-Stop:     $local_fs $syslog $remote_fs
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Start FastCGI Mono server with hosts
+### END INIT INFO
+
+# Adapted from example code here:
+#   http://techblog.djs-consulting.com/2010/mono-fastcgi-startup-script.html
+
+## Begin -- MAKE CHANGES HERE --
+PROGRAM=fastcgi-mono-server4 # The program which will be started
+ADDRESS=127.0.0.1            # The address on which the server will listen
+PORT=9000                    # The port on which the server will listen
+USER=www-data                # The user under which the process will run
+GROUP=$USER                  # The group under which the process will run
+LOG_DIR=/var/log/mono/       # The directory where we'll store logs
+LOG_FILE=fastcgi.log         # The file for all FastCGI Mono related log entries
+## End   -- MAKE CHANGES HERE --
+
+
+
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+DAEMON=/usr/local/bin/mono # TODO: is this used anywhere?
+NAME=monoserver
+DESC=monoserver
+
+# Determine the environment
+MONOSERVER=$(which $PROGRAM)
+MONOSERVER_PID=""
+FCGI_CONFIG_DIR=/etc/init.d/mono-fastcgi
+
+# Start up the Mono server
+start_up() {
+    get_pid
+    if [ -z "$MONOSERVER_PID" ]; then
+        #echo "Configured Applications"
+        #echo "-----------------------"
+        ## Construct the application list if the configuration directory exists
+        #if [ -d $FCGI_CONFIG_DIR ]; then
+        #    MONO_FCGI_APPLICATIONS=""
+        #    for file in $( ls $FCGI_CONFIG_DIR ); do
+        #        if [ "$MONO_FCGI_APPLICATIONS" != "" ]; then
+        #            MONO_FCGI_APPLICATIONS=$MONO_FCGI_APPLICATIONS,
+        #        fi
+        #        MONO_FCGI_APPLICATIONS=$MONO_FCGI_APPLICATIONS`cat $FCGI_CONFIG_DIR/$file`
+        #    done
+        #    export MONO_FCGI_APPLICATIONS
+        #    echo -e ${MONO_FCGI_APPLICATIONS//,/"\n"}
+        #else
+        #    echo "None (config directory $FCGI_CONFIG_DIR not found)"
+        #fi
+        #echo
+
+        # Archive old logfile and create a new one
+        # TODO: archive old logfile
+        [ ! -d $LOG_DIR ] && sudo mkdir --p $LOG_DIR
+        sudo touch $LOG_DIR/$LOG_FILE
+        sudo chgrp -v $GROUP $LOG_DIR/$LOG_FILE
+        sudo chmod g+rw $LOG_DIR/$LOG_FILE
+
+        # Start the server
+        start-stop-daemon -S -c $USER:$GROUP -x $MONOSERVER -- --appconfigdir $FCGI_CONFIG_DIR /socket=tcp:$ADDRESS:$PORT /logfile=$LOG_DIR/$LOG_FILE &
+        #fastcgi-mono-server4 --appconfigdir /etc/init.d/mono-fastcgi /socket=tcp:127.0.0.1:9000 /logfile=/var/log/mono/fastcgi.log &
+
+        echo "Mono FastCGI Server $PROGRAM started as $USER on $ADDRESS:$PORT"
+    else
+        echo "Mono FastCGI Server is already running - PID $MONOSERVER_PID"
+    fi
+}
+
+# Shut down the Mono server
+shut_down() {
+    get_pid
+    if [ -n "$MONOSERVER_PID" ]; then
+        kill $MONOSERVER_PID
+        echo "Mono FastCGI Server stopped"
+    else
+        echo "Mono FastCGI Server is not running"
+    fi
+}
+
+# Refresh the PID
+get_pid() {
+    MONOSERVER_PID=$(ps auxf | grep $PROGRAM.exe | grep -v grep | awk '{print $2}')
+}
+
+case "$1" in
+    start)
+        start_up
+    ;;
+    stop)
+        shut_down
+    ;;
+    restart|force-reload)
+        shut_down
+        start_up
+    ;;
+    status)
+        get_pid
+        if [ -z "$MONOSERVER_PID" ]; then
+            echo "Mono FastCGI Server is not running"
+        else
+            echo "Mono FastCGI Server is running - PID $MONOSERVER_PID"
+        fi
+    ;;
+    *)
+        echo "Usage: monoserve (start|stop|restart|force-reload|status)"
+    ;;
+esac
+
+exit 0
