@@ -1,0 +1,93 @@
+#!/usr/bin/env bash
+
+### BEGIN INIT INFO
+# Provides:          wwwroot-watcher-service
+# Required-Start:    $local_fs $syslog $remote_fs
+# Required-Stop:     $local_fs $syslog $remote_fs
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Start wwwroot-watcher running in the background
+### END INIT INFO
+
+## Begin -- MAKE CHANGES HERE --
+PROGRAM_NAME=wwwroot-watcher           # The program which will be started
+PROGRAM_EXE=$PROGRAM_NAME.sh           # The program which will be started
+PROGRAM_PATH=/etc/init.d/$PROGRAM_EXE  # The full path to the program
+USER=www-data                          # The user under which the process will run
+GROUP=$USER                            # The group under which the process will run
+LOG_FILE=/var/log/$PROGRAM_NAME.log    # Log file
+## End   -- MAKE CHANGES HERE --
+
+
+PROGRAM_PID=""
+
+start_up() {
+    get_pid
+    if [ -z "$PROGRAM_PID" ]; then
+        echo "Starting $PROGRAM_NAME as user: $USER"
+        #start-stop-daemon -S -c $USER:$GROUP -x $PROGRAM_PATH &
+        #start-stop-daemon -S -c www-data:www-data -x /etc/init.d/wwwroot-watcher.sh -- 0<&- &>/dev/null &
+        #nohup $PROGRAM_PATH 0<&- &>/dev/null &
+        #($PROGRAM_PATH &) &
+
+        # alternate way: http://stackoverflow.com/questions/9190151/how-to-run-a-shell-script-in-the-backgroung-and-get-no-output
+        #nohup /etc/init.d/wwwroot-watcher.sh parameter1 > & 1 &
+        #/etc/init.d/wwwroot-watcher.sh > somefile 2>&1 &
+
+        #http://h30499.www3.hp.com/t5/System-Administration/nohup-an-su-command/td-p/4175465
+        nohup su www-data -c "$PROGRAM_PATH" > /var/log/wwwroot-watcher.log 2>&1 &
+
+        write_status
+        if [ -z "$PROGRAM_PID" ]; then
+        	echo ""
+            echo "It looks like there was a problem starting $PROGRAM_NAME"
+            echo ""
+        fi
+    else
+        echo "$PROGRAM_NAME is already running - PID $PROGRAM_PID"
+    fi
+}
+
+shut_down() {
+    get_pid
+    if [ -n "$PROGRAM_PID" ]; then
+        kill $PROGRAM_PID
+        echo "$PROGRAM_NAME stopped"
+    else
+        echo "$PROGRAM_NAME is not running"
+    fi
+}
+
+write_status() {
+    get_pid
+    if [ -z "$PROGRAM_PID" ]; then
+        echo "$PROGRAM_NAME is not running"
+    else
+        echo "$PROGRAM_NAME is running - PID $PROGRAM_PID"
+    fi
+}
+
+get_pid() {
+    PROGRAM_PID=$(ps auxf | grep $PROGRAM_EXE | grep -v grep | awk '{print $2}')
+}
+
+case "$1" in
+    start)
+        start_up
+    ;;
+    stop)
+        shut_down
+    ;;
+    restart|force-reload)
+        shut_down
+        start_up
+    ;;
+    status)
+        write_status
+    ;;
+    *)
+        echo "Usage: wwwroot-watcher-service (start|stop|restart|force-reload|status)"
+    ;;
+esac
+
+exit 0

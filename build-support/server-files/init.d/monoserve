@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 ### BEGIN INIT INFO
-# Provides:          monoserve.sh
+# Provides:          monoserve
 # Required-Start:    $local_fs $syslog $remote_fs
 # Required-Stop:     $local_fs $syslog $remote_fs
 # Default-Start:     2 3 4 5
