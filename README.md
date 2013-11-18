@@ -21,7 +21,28 @@ Prerequisites:
 How to use this Vagrant box:
 ============================
 
-*TODO*
+Build it yourself
+-------------------
+
+Once you have the prerquisites installed and have built and installed the `vagrant-mono` base box, do the following:
+
+```shell
+	git clone git://github.com/chilimangoes/vagrant-mono-nginx.git
+	cd vagrant-mono-nginx
+	vagrant up
+```
+
+Provisioning your new development server will take a few minutes. When it's done, you will need to restart the server by issuing a `vagrant reload` command. When your box comes back up, your development server will be ready. You can run `vagrant ssh` to connect to the box and start using it.
+
+
+Hosting a Web Project
+=====================
+
+If you navigate to http://localhost:8093/Default.aspx you should see a test page.
+
+Out of the box, the `./src/WebProject` directory in this repository will be mounted as `/var/wwwroot` on the server. When you add/remove/edit files in this directory, your changes will be reflected at the URL above. If you change the name of this folder from `WebProject` to something else, you will need to edit the `$WEB_PROJECT_FOLDER` variable in the Vagrantfile.
+
+Note: Shared folders in VirtualBox have a bug where files that are modified on the host system do not trigger file system events in the guest, and vice-versa. Because Nginx and FastCGI Mono listen for these events to trigger updating resources, recompiling ASPX pages, reloading DLLs, etc, this causes changes made locally to not show up unless the web server is restarted. To work around this issue, a script is installed which monitors /var/wwwroot for changes and issues a `touch /var/wwwroot` command to trigger a file system event that Nginx and FastCGI Mono can pick up. By default, this script (./build-support/server-files/development/wwwroot-watcher.sh) is set to rescan for changes every 5 seconds. This value can be adjusted based on your project size to balance responsiveness to changes with the performance impact that scanning for changes might have on a large directory tree.
 
 
 Reference:

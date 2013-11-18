@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 
-# the name of the folder, under ./vagran-mono-nginx/src, where the web project lives, eg 'WebProject' for vagran-mono-nginx/src/WebProject
-WEB_PROJECT_NAME=WebProject
+[ "$#" -eq 1 ] || die "1 argument required, $# provided"
+
+# the name of the folder, under ./vagrant-mono-nginx/src, where the web project lives, eg 'WebProject' for vagrant-mono-nginx/src/WebProject
+# this should be passed in as the first argument to this script
+WEB_PROJECT_NAME=$1
 
 if [[ ! -d "/var/wwwroot" ]]; then
 	echo "/var/wwwroot directory does not exist yet... creating it now..."

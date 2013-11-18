@@ -1,6 +1,7 @@
-VAGRANTFILE_API_VERSION = "2"
 
-Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+$WEB_PROJECT_FOLDER = "WebProject"
+
+Vagrant.configure("2") do |config|
   config.vm.box = "vagrant-mono"
 
   # The url from where the box box will be fetched if it
@@ -17,11 +18,8 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.provision :shell, :path => "build-support/provisioning/configure-nginx.sh"
   config.vm.provision :shell, :path => "build-support/provisioning/configure-fastcgi-mono.sh"
 
-  # TODO: need to parameterize the name of the web project folder here and pass it in to the script
-  config.vm.provision :shell, :path => "build-support/provisioning/configure-website-dev.sh"
-
-  # TODO: need to parameterize the name of the web project folder here
-  config.mount_commands.command "sudo mount --bind /vagrant/src/WebProject/ /var/wwwroot/"
+  config.vm.provision :shell, :path => "build-support/provisioning/configure-website-dev.sh", args: $WEB_PROJECT_FOLDER
+  config.mount_commands.command "sudo mount --bind /vagrant/src/" + $WEB_PROJECT_FOLDER + "/ /var/wwwroot/"
 
   config.vm.network :forwarded_port, guest: 80, host: 8093
 end
