@@ -3,10 +3,7 @@ $WEB_PROJECT_FOLDER = "WebProject"
 
 Vagrant.configure("2") do |config|
   config.vm.box = "vagrant-mono"
-
-  # The url from where the box box will be fetched if it
-  # doesn't already exist on the user's system.
-  #config.vm.box_url = "http://files.mysite.com/vagrant-mono.box"
+  config.vm.box_url = "https://github.com/chilimangoes/vagrant-mono/releases/download/3.2.3/package.box"
 
   config.vm.provider :virtualbox do |vb|
     # Use VBoxManage to customize the VM. For example to change memory:
